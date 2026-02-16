@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { mongoURI } from "../../config/env.service.js";
+import { mongoURI } from "../../config/index.js";
 
 export const databaseConnection = async ()=> { 
     await mongoose.connect(mongoURI).then(()=>{
