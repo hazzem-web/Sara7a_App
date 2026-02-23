@@ -12,9 +12,11 @@ router.post('/signup', async (req,res)=>{
 
 
 router.post('/login', async (req,res)=>{
-    let userData = await login(req.body);
+    let userData = await login(req.body , `${req.protocol}://${req.host}`);
     return SuccessResponse({res , message: "user login successfully" , status:200 , data: userData})
 })
+
+
 
 
 export default router;
