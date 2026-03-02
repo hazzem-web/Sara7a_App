@@ -1,7 +1,5 @@
-import jwt from 'jsonwebtoken';
 import { UnAuthorizedException } from "../utils/responses/index.js";
-import { JwtAdminSignature, JwtUserSignature } from '../../../config/index.js';
-
+import { decodeToken } from '../security/security.js';
 
 
 export const auth = (req,res,next)=>{
@@ -9,18 +7,18 @@ export const auth = (req,res,next)=>{
     if (!authorization) { 
         return UnAuthorizedException("UnAuthorized");
     }
-    let decoded = jwt.decode(authorization)
-    let signature = undefined;
-    switch (decoded.aud) {
-        case "Admin":
-            signature = JwtAdminSignature;
+    let [flag , token] = authorization.split(' ');
+    switch (flag) {
+        case "Basic":
+            let data = Buffer.from(token, 'base64').toString();
+            let [email , password] = data.split(':');
+            console.log(email , " " , password);
             break;
-    
-        default:
-            signature = JwtUserSignature;
+        case "Bearer":
+            let decodedData = decodeToken(token);
+            req.userId = decodedData.id;
+            next();
+        default: 
             break;
     }
-    let verified = jwt.verify(authorization,signature)
-    req.userId = verified.id;
-    next();
 }

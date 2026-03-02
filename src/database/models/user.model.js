@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: Object.values(RoleEnums),
         default: RoleEnums.User
+    },
+    viewsCount:{
+        type: Number,
+        default: 0
     }
 },{
     timestamps:true

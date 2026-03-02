@@ -27,7 +27,7 @@ export const NotFoundException = ({ message = "NotFoundException" , extra = unde
 
 export const ConflictException = ({ message = "ConflictException", extra = undefined } = {})=>{
     return ErrorResponse({
-        status:409,
+        status:403,
         message,
         extra
     })
@@ -67,8 +67,7 @@ export const globalErrorHandler = (err,req,res,next)=>{
     const mood = envMood == 'dev';
     const defaultMessage = "something went wrong";
     const displayErrorMessage = err.message || defaultMessage;
-    const extra = err.extra || {};
-    
+    const extra = err?.cause?.extra || {};  
     res.status(status).json({
         status,
         stack: mood ? err.stack : null,
