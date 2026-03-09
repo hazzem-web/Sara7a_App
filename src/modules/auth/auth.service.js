@@ -1,11 +1,9 @@
 import { JwtAdminSignature, JwtUserSignature } from "../../../config/env.service.js";
 import { compareHash, decodeRefreshToken, generateHash, generateToken, NOTE_SAFE_PROJECTION, ProviderEnums } from "../../common/index.js";
-import { BadRequestException, ConflictException, ErrorResponse, NotFoundException } from "../../common/utils/responses/index.js";
+import { BadRequestException, ConflictException, ErrorResponse, NotFoundException, UnAuthorizedException } from "../../common/utils/responses/index.js";
 import { findOne, insertOne, userModel } from "../../database/index.js";
 import jwt from 'jsonwebtoken';
 import {OAuth2Client} from 'google-auth-library';
-
-
 
 export const signup = async(data)=>{
     let { userName , email , password } = data;
@@ -32,18 +30,36 @@ export const signup = async(data)=>{
 
 
 export const login = async(data,issuer)=>{
-    let {email , password } = data;
+    let {email , password , twoStepVerification=false} = data;
     let userData = await findOne({
         model: userModel , 
         filter: {email , provider: ProviderEnums.System},
         select: `${NOTE_SAFE_PROJECTION}`
     });
-
     if (userData) { 
-        let { accessToken , refreshToken } = generateToken(userData , issuer);
+        if (userData.blockingTime && ( userData.blockingTime > Date.now() )) { 
+            throw UnAuthorizedException({message: "Too many attempts try again within 5 minutes"})
+        }
         const isMatched = await compareHash(password,userData.password); 
         if (isMatched) {   
+            userData.twoStepVerification = twoStepVerification;
+            if(twoStepVerification) { 
+                console.log("hello")
+            }
+            let { accessToken , refreshToken } = generateToken(userData , issuer);
+            userData.attempts = 0;
+            userData.blockingTime = null;
+            await userData.save();
             return { userData, accessToken , refreshToken};
+        }
+
+        userData.attempts += 1;
+        await userData.save();
+        if (userData.attempts >= 5) { 
+            userData.blockingTime = Date.now() + (60 * 5000);
+            userData.attempts = 0;
+            await userData.save();
+            throw UnAuthorizedException({message: "many incorrect passwords please login later"})
         }
         return NotFoundException({message: "incorrect password"})
     }

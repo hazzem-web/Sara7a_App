@@ -25,7 +25,22 @@ export const signupSchema = joi.object({
 
 export const loginSchema = joi.object({
     email: joi.string().min(3).max(50).required(),
-    password: joi.string().min(6).max(50).required()
+    password: joi.string().min(6).max(50).required(),
+    twoStepVerification: joi.boolean().optional()
 })
 
 
+export const fileSchema = joi.object({
+    file: {
+        fieldname: joi.string().required(),
+        originalname: joi.string().required(),
+        encoding: joi.string().required(),
+        mimetype: joi.string().required(),
+        destination: joi.string().required(),
+        filename: joi.string().required(),
+        path: joi.string().required(),
+        size: joi.number().required(),
+        finalPath: joi.string().required()
+    },
+    text: joi.string().optional()
+})

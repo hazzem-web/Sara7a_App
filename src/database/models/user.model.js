@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { GenderEnums, ProviderEnums, RoleEnums } from "../../common/index.js";
+import { type } from "node:os";
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -43,6 +44,18 @@ const userSchema = new mongoose.Schema({
     viewsCount:{
         type: Number,
         default: 0
+    },
+    attempts: {
+        type: Number, 
+        default: 0
+    },
+    blockingTime: { 
+        type: Date,
+        default: null
+    },
+    twoStepVerification: { 
+        type: Boolean,
+        default: false
     }
 },{
     timestamps:true
