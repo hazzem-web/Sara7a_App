@@ -157,7 +157,7 @@ export const findById = async({
 export const findByIdAndUpdate = async({
     model,
     id,
-    update,
+    update={},
     select = '',
     options = {}
 })=>{

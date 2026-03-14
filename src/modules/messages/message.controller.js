@@ -1,13 +1,13 @@
 import Router from 'express';
 import { deleteMessage, getAllMessages, getMessageById, sendMessage } from './message.service.js';
 import { SuccessResponse } from '../../common/utils/responses/index.js';
-import { auth, valiadtion } from '../../common/middleware/index.js';
+import { auth, extensions, upload, valiadtion } from '../../common/middleware/index.js';
 import { sendMessageSchmea } from './message.validation.js';
 
 const router = Router(); 
 
-router.post('/send-message/:recieverID' , valiadtion(sendMessageSchmea) , async (req,res)=>{
-    let message = await sendMessage(req.params , req.body);
+router.post('/send-message/:recieverID' , upload({customPath: 'image/users/images' , allowedExtensions: extensions.image}).single('image') , valiadtion(sendMessageSchmea) , async (req,res)=>{
+    let message = await sendMessage(req.params , req.body , req.file);
     SuccessResponse({res , message: "message added successfully" , status: 201 , data: message});
 })
 

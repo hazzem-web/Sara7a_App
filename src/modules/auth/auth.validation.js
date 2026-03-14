@@ -1,4 +1,6 @@
 import joi from 'joi';
+const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*-+]).{8,}$/;
+export const phonePattern = /^\+?[1-9]\d{1,14}$/
 
 export const signupSchema = joi.object({
     userName: joi.string().min(3).max(50).required(),
@@ -7,18 +9,18 @@ export const signupSchema = joi.object({
             .string()
             .min(6)
             .max(50)
-            .pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*-+]).{8,}$/)
+            .pattern(passwordRegex)
             .required(),
     gender: joi.string().optional(),        
-    age: joi.number().min(18).max(50).optional().messages({
+    age: joi.number().min(18).max(50).required().messages({
         "number.min": "age must be at least 18",
         "number.max": "age must be at most 50"
     }),
-    users: joi.array().optional().items(
-        joi.object({
-            name: joi.string().min(3).max(50).required()
-        })
-    )
+    shareProfileName: joi.string().required(),
+    image: joi.string().optional(),
+    phone: joi.string().pattern(phonePattern).optional().messages({
+        "validation error": "phone must be a valid phone number"
+    })
 }); 
 
 

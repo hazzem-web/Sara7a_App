@@ -2,12 +2,12 @@ import multer from 'multer';
 import fs from 'node:fs';
 
 export let extensions = {
-    image: [ 'image/jpeg' , 'image/jpg' , 'image/webp' ],
+    image: [ 'image/jpeg' , 'image/jpg' , 'image/webp' , 'image/png'],
     video: [ 'video/mp4' , 'video/webm' , 'video/ogg' ],
     pdf  : [ 'application/pdf' ]
 }
 
-export const multer_local = ({customPath , allowedExtensions , maxSize} = {customPath: 'general' , maxSize: 5})=>{
+export const upload = ({customPath = 'general' , allowedExtensions = [] , maxSize = 5} = {})=>{
     let storage = multer.diskStorage({
         destination: function(req ,file , cb){
             let filesPath = `uploads/${customPath}`;
@@ -26,10 +26,8 @@ export const multer_local = ({customPath , allowedExtensions , maxSize} = {custo
 
 
     let fileFilter = function(req,file,cb){
-        console.log(file);
-        console.log(file.mimetype);
         if (!allowedExtensions.includes(file.mimetype)) { 
-            cb("file type is not allowed" , false);
+            return cb(new Error("file type is not allowed") , false);
         }
         cb(null , true);
     }

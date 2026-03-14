@@ -24,6 +24,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    age: { 
+        type: Number,
+        required: true
+    },
+    shareProfileName: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    image:{
+        type: String
+    },
     phone: String,
     DOB: String,
     gender: { 

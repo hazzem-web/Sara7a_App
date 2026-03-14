@@ -6,7 +6,6 @@ import cors from 'cors';
 import authRouter from './modules/auth/auth.controller.js';
 import userRouter from './modules/users/user.controller.js';
 import messageRouter from './modules/messages/message.controller.js';
-
 export const bootstrap = async ()=>{
     const app = express();
     app.use(express.json());

@@ -4,9 +4,9 @@ import { BadRequestException, ConflictException, ErrorResponse, NotFoundExceptio
 import { findOne, insertOne, userModel } from "../../database/index.js";
 import jwt from 'jsonwebtoken';
 import {OAuth2Client} from 'google-auth-library';
-
-export const signup = async(data)=>{
-    let { userName , email , password } = data;
+import {BASE_URL} from '../../../config/env.service.js';
+export const signup = async(data , file)=>{
+    let { userName , email , password , age , shareProfileName , phone} = data;
     let existUser = await findOne({ 
         model: userModel , 
         filter:{email}
@@ -14,12 +14,17 @@ export const signup = async(data)=>{
     if (existUser) { 
         return ConflictException({message: 'user already exists'});
     }
+    let image = '';
+
+    if (file){
+        image = `${BASE_URL}/${file.destination}/${file.filename}`;
+    }
     // const salt = await bcrypt.genSalt( +Salt , "a")
     let hashedPassword = await generateHash(password);
 
     let addedUser = await insertOne({
         model:userModel,
-        data: {userName , email , password:hashedPassword}
+        data: {userName , email , password:hashedPassword , age , shareProfileName , image , phone}
     })
     if (!addedUser) { 
         return ErrorResponse();
@@ -122,3 +127,6 @@ export const signupGoogle = async(data)=>{
 
     return addedUser;
 }
+
+
+

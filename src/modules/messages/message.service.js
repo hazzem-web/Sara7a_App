@@ -1,25 +1,31 @@
+import { BASE_URL } from "../../../config/env.service.js";
 import { NOTE_SAFE_PROJECTION, USER_SAFE_PROJECTION } from "../../common/utils/projections.js";
 import { BadRequestException, NotFoundException, UnAuthorizedException } from "../../common/utils/responses/index.js";
 import { deleteOne, findAll, findById, findByIdAndDelete, findOne, insertOne, userModel } from "../../database/index.js";
 import { messageModel } from "../../database/models/message.model.js";
 
-export const sendMessage = async(params,data)=>{
+export const sendMessage = async(params , data , file)=>{
     let { recieverID } = params;
-    let { message , image} = data;
+    let { message} = data;
 
     let existReciever = await findById({
         model: userModel,
         id: recieverID,
-        select: `${USER_SAFE_PROJECTION} ${NOTE_SAFE_PROJECTION}`
     })
 
     if (!existReciever) { 
         throw NotFoundException("user not found");
     }
 
+    let image = '';
+
+    if (file){
+        image = `${BASE_URL}/${file.destination}/${file.filename}`;
+    }
+
     let addedMessage = await insertOne({
         model: messageModel ,
-        data: {message , image , recieverID }
+        data: { message , recieverID , image}
     })
 
     if (addedMessage) { 
