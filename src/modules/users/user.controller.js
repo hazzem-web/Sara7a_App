@@ -37,4 +37,5 @@ router.delete('/delete-user', auth , async(req,res)=>{
     return SuccessResponse({res, message: 'user deleted successfully', status: 200})
 })
 
+
 export default router;

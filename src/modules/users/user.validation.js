@@ -16,3 +16,4 @@ export const updateUserSchema = joi.object({
     age: joi.number().optional(),
     image: joi.string().optional()
 })
+
