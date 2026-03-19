@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { generateAccessToken, login, signup, signupGoogle } from "./auth.service.js";
+import { generateAccessToken, login, logout, signup, signupGoogle } from "./auth.service.js";
 import { SuccessResponse } from '../../common/utils/responses/index.js';
-import { extensions, upload, valiadtion } from "../../common/middleware/index.js";
+import { auth, extensions, upload, valiadtion } from "../../common/middleware/index.js";
 import { loginSchema, signupSchema } from "./auth.validation.js";
 
 
@@ -36,16 +36,9 @@ router.post('/signup/gmail', async(req,res)=>{
 })
 
 
-
-router.post('/forget-password', async(req,res)=>{
-    let data = await forgetPassword(req.body);
-    return SuccessResponse({res, message: "otp sent", status: 200 , data});
-})
-
-
-router.post('/reset-password', async(req,res)=>{
-    let data = await resetPassword(req.body);
-    return SuccessResponse({res, message: 'password reset successfully', status: 200, data}) 
+router.post('/logout' , auth , async(req,res)=>{
+    let user = await logout(req);
+    return SuccessResponse({res, message: 'User Logged Out Successsfully', status: 200});
 })
 
 

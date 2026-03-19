@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
+import {v4 as uuidv4} from "uuid";
 import { JwtAdminRefreshSignature, JwtAdminSignature, JwtUserRefreshSignature, JwtUserSignature } from '../../../config/index.js';
 import { UnAuthorizedException } from '../utils/responses/index.js';
-export const  generateToken = (user , issuer) => {
+import { set } from '../../database/redis.service.js';
+export const generateToken = async (user , issuer) => {
   let signature = undefined;
   let audience = undefined;
   let refreshSignature = undefined;
@@ -18,21 +20,28 @@ export const  generateToken = (user , issuer) => {
       audience = "User";
       break;
   }
-
-  let accessToken = jwt.sign({ id: user._id }, signature, {
+  const jti = uuidv4();
+  let accessToken = jwt.sign({ id: user._id , jti}, signature, {
     expiresIn: "30m",
-    notBefore: "30s",
+    // notBefore: "30s",
     issuer,
     audience,
   });
-
-    let refreshToken = jwt.sign({ id: user._id }, refreshSignature, {
+  const refreshJti = uuidv4();
+    let refreshToken = jwt.sign({ id: user._id , jti: refreshJti}, refreshSignature, {
     expiresIn: "1y",
-    notBefore: "30s",
+    // notBefore: "30s",
     issuer,
     audience,
   });
-  
+  let decoded = jwt.verify(accessToken , signature);
+  const ttl = (decoded.exp - decoded.iat) 
+  let revokeKey = `revokeToken::${user._id}::${jti}`;
+  await set({
+    key: revokeKey,
+    value: 0,
+    ttl
+  })
 
   return { accessToken , refreshToken};
 };
@@ -59,7 +68,7 @@ export const decodeToken = (token)=>{
 }
 
 
-export const  decodeRefreshToken = (token)=>{
+export const decodeRefreshToken = (token)=>{
   let decoded = jwt.decode(token);
     if (!decoded) { 
       return UnAuthorizedException();
