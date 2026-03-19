@@ -1,6 +1,6 @@
 import { UnAuthorizedException } from "../utils/responses/index.js";
 import { decodeToken } from '../security/security.js';
-import { exists } from "../../database/redis.service.js";
+import { exists, generateRevokeKey } from "../../database/redis.service.js";
 
 
 export const auth = async(req,res,next)=>{
@@ -17,7 +17,7 @@ export const auth = async(req,res,next)=>{
             break;
         case "Bearer":
             let decodedData = decodeToken(token);
-            const revokeToken = `revokeToken::${decodedData.id}::${decodedData.jti}`
+            const revokeToken = generateRevokeKey({userId :decodedData.id , jti: decodedData.jti})
             let exist = await exists(revokeToken);
             if(!exist) { 
                 throw UnAuthorizedException({message: 'token revoked or expired'})

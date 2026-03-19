@@ -2,8 +2,11 @@ import { BASE_URL } from "../../../config/env.service.js";
 import { NOTE_SAFE_PROJECTION, USER_SAFE_PROJECTION } from "../../common/utils/projections.js";
 import { NotFoundException } from "../../common/utils/responses/index.js";
 import { findById, findByIdAndDelete, findByIdAndUpdate, findOne, userModel } from "../../database/index.js";
-import fs from 'node:fs';
+import { get, redisDelete, set } from "../../database/redis.service.js";
 
+const genProfileKey = (userId)=>{
+    return `userProfile::${userId}`;
+}
 
 export const increaseUserViewCount = async (userData)=>{
     userData.viewsCount += 1;
@@ -34,15 +37,24 @@ export const getUserById = async(userId)=>{
 
 
 export const getUserProfile = async(userId)=>{
-    let userData = await findById({
+    let cachedUser = genProfileKey(userId);
+    let userData = await get(cachedUser);
+    if (userData) { 
+        return userData
+    }    
+    userData = await findById({
         model: userModel,
         id: userId,
         select: 'firstName lastName email shareProfileName image viewsCount'
     });
-    
     if (!userData) { 
         userNotFound();
     }
+    await set({
+        key : cachedUser,
+        value: userData,
+        ttl : 60
+    })
     await increaseUserViewCount(userData);
     return {userData};
 };
@@ -98,10 +110,13 @@ export const updateUser = async(userId , data , file)=>{
         update: updatedData,
         options: {returnDocument: 'after'}
     })
-    if (!user) { 
-        userNotFound();
-    }
-    return {user};
+    if (user) { 
+        await redisDelete(genProfileKey(userId));
+        return {user};
+    } 
+
+    userNotFound();
+    
 }
 
 

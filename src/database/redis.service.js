@@ -54,3 +54,8 @@ export const keys = async(prefix)=>{
     let data = await client.keys(`${prefix}*`)
     return data;
 }
+
+
+export const generateRevokeKey = ({userId , jti}={})=>{
+    return `revokeToken::${userId}::${jti}`
+}

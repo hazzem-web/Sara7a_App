@@ -5,7 +5,7 @@ import { findOne, insertOne, userModel } from "../../database/index.js";
 import jwt from 'jsonwebtoken';
 import {OAuth2Client} from 'google-auth-library';
 import {BASE_URL} from '../../../config/env.service.js';
-import { redisDelete } from "../../database/redis.service.js";
+import { generateRevokeKey, redisDelete } from "../../database/redis.service.js";
 export const signup = async(data , file)=>{
     let { userName , email , password , age , shareProfileName , phone} = data;
     let existUser = await findOne({ 
@@ -134,7 +134,7 @@ export const signupGoogle = async(data)=>{
 export const logout = async(req)=>{
     let {userId , decoded} = req;
     let {jti} = decoded;
-    const revokeToken = `revokeToken::${userId}::${jti}`
+    const revokeToken = generateRevokeKey({userId,jti})
     await redisDelete(revokeToken);
 }
 

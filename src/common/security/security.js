@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import {v4 as uuidv4} from "uuid";
 import { JwtAdminRefreshSignature, JwtAdminSignature, JwtUserRefreshSignature, JwtUserSignature } from '../../../config/index.js';
 import { UnAuthorizedException } from '../utils/responses/index.js';
-import { set } from '../../database/redis.service.js';
+import { generateRevokeKey, set } from '../../database/redis.service.js';
 export const generateToken = async (user , issuer) => {
   let signature = undefined;
   let audience = undefined;
@@ -36,7 +36,7 @@ export const generateToken = async (user , issuer) => {
   });
   let decoded = jwt.verify(accessToken , signature);
   const ttl = (decoded.exp - decoded.iat) 
-  let revokeKey = `revokeToken::${user._id}::${jti}`;
+  const revokeKey = generateRevokeKey({userId: user.id , jti}) ;
   await set({
     key: revokeKey,
     value: 0,
