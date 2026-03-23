@@ -61,14 +61,6 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    attempts: {
-        type: Number, 
-        default: 0
-    },
-    blockingTime: { 
-        type: Date,
-        default: null
-    },
     twoStepVerification: { 
         type: Boolean,
         default: false

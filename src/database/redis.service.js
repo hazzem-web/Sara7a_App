@@ -5,10 +5,17 @@ export const set = async ({key , value , ttl}={})=>{
     if (typeof value == 'object') { 
         value = JSON.stringify(value);
     }
+    if (ttl) { 
+        let expiredData = await client.set(
+            key,
+            value,
+            {EX: ttl}
+        )
+        return expiredData;
+    }
     let data = await client.set(
-        key,
-        value,
-        {EX: ttl}
+        key, 
+        value
     )
     return data;
 }
@@ -32,6 +39,11 @@ export const ttl = async(key)=>{
 export const exists = async(key)=>{
     let existedData = await client.exists(key);
     return existedData;
+}
+
+export const increment = async(key)=>{
+    let incrementedData = await client.incr(key);
+    return incrementedData;
 }
 
 export const redisDelete = async(key)=>{

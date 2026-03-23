@@ -5,7 +5,7 @@ import { findOne, findOneAndUpdate, insertOne, userModel } from "../../database/
 import jwt from 'jsonwebtoken';
 import {OAuth2Client} from 'google-auth-library';
 import {BASE_URL} from '../../../config/env.service.js';
-import { generateRevokeKey, get, redisDelete, set } from "../../database/redis.service.js";
+import { generateRevokeKey, get, increment, redisDelete, set, ttl } from "../../database/redis.service.js";
 import { sendEmail } from "../../common/utils/email/sendEmail.js";
 import { event } from "../../common/utils/email/email.events.js";
 export const redisOtp = (userOrId)=>{ // to pass user or id and extract id 
@@ -80,35 +80,43 @@ export const verifyEmail = async({code, email})=>{
 
 export const login = async(data,issuer)=>{
     let {email , password , twoStepVerification=false} = data;
+    let userCacheKey = `user::${email}`;
+    let bannedUserKey = `user::banned::${email}`
+    let blockingTime = Math.ceil(await ttl(bannedUserKey) / 60)
+    if (await get(bannedUserKey)) { 
+        throw UnAuthorizedException({message: `User Is Banned Because Too many attempts try again within ${blockingTime} minutes`})
+    }
     let userData = await findOne({
         model: userModel , 
         filter: {email , provider: ProviderEnums.System},
         select: `${NOTE_SAFE_PROJECTION}`
     });
     if (userData) { 
-        if (userData.blockingTime && ( userData.blockingTime > Date.now() )) { 
-            throw UnAuthorizedException({message: "Too many attempts try again within 5 minutes"})
-        }
         const isMatched = await compareHash(password,userData.password); 
         if (isMatched) {   
+            await redisDelete(userCacheKey);
             userData.twoStepVerification = twoStepVerification;
             if(twoStepVerification) { 
                 console.log("hello")
             }
             let { accessToken , refreshToken } = await generateToken(userData , issuer);
-            userData.attempts = 0;
-            userData.blockingTime = null;
-            await userData.save();
             return { userData, accessToken , refreshToken};
         }
-
-        userData.attempts += 1;
-        await userData.save();
-        if (userData.attempts >= 5) { 
-            userData.blockingTime = Date.now() + (60 * 5000);
-            userData.attempts = 0;
-            await userData.save();
-            throw UnAuthorizedException({message: "many incorrect passwords please login later"})
+        if (await get(userCacheKey)) { 
+            await increment(userCacheKey);
+            if (await get(userCacheKey) == 5){ 
+                await set({
+                    key: bannedUserKey,
+                    value: "true",
+                    ttl: 5 * 60
+                })
+                await redisDelete(userCacheKey);
+            }
+        } else { 
+            await set ({
+                key: userCacheKey,
+                value: 1
+            })
         }
         return NotFoundException({message: "incorrect password"})
     }
