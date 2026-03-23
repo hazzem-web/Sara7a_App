@@ -14,4 +14,6 @@ const JwtUserSignature = process.env.JWT_USER_SIGNATURE;
 const JwtAdminRefreshSignature = process.env.JWT_ADMIN_REFRESH_SIGNATURE;
 const JwtUserRefreshSignature = process.env.JWT_USER_REFRESH_SIGNATURE;
 const BASE_URL = `${process.env.BASE_DOMAIN}${Port}`;
-export { mongoURI , REDIS_URI , Salt , Secret , Port , envMood , Jwt_Key , JwtAdminSignature , JwtUserSignature , JwtAdminRefreshSignature , JwtUserRefreshSignature , BASE_URL};
+const AppEmail = process.env.APP_EMAIL;
+const AppPassword = process.env.APP_PASSWORD;
+export { mongoURI , REDIS_URI , Salt , Secret , Port , envMood , Jwt_Key , JwtAdminSignature , JwtUserSignature , JwtAdminRefreshSignature , JwtUserRefreshSignature , BASE_URL , AppEmail , AppPassword };
