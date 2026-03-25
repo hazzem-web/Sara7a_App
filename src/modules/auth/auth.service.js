@@ -1,17 +1,19 @@
 import { JwtAdminSignature, JwtUserSignature } from "../../../config/env.service.js";
 import { compareHash, decodeRefreshToken, generateHash, generateToken, NOTE_SAFE_PROJECTION, ProviderEnums } from "../../common/index.js";
 import { BadRequestException, ConflictException, ErrorResponse, NotFoundException, UnAuthorizedException } from "../../common/utils/responses/index.js";
-import { findOne, findOneAndUpdate, insertOne, userModel } from "../../database/index.js";
+import { findById, findOne, findOneAndUpdate, insertOne, userModel } from "../../database/index.js";
 import jwt from 'jsonwebtoken';
 import {OAuth2Client} from 'google-auth-library';
 import {BASE_URL} from '../../../config/env.service.js';
 import { generateRevokeKey, get, increment, redisDelete, set, ttl } from "../../database/redis.service.js";
-import { sendEmail } from "../../common/utils/email/sendEmail.js";
 import { event } from "../../common/utils/email/email.events.js";
-export const redisOtp = (userOrId)=>{ // to pass user or id and extract id 
-    const id = typeof userOrId === 'object' ? userOrId._id : userOrId
-    return `otp::${id}`
-}
+
+
+export const redisKey = (type, userOrId) => {
+    const id = typeof userOrId === 'object' ? userOrId._id : userOrId;
+    return `user::${type}::${id}`;
+};
+
 export const signup = async(data , file)=>{
     let { userName , email , password , age , shareProfileName , phone} = data;
     let existUser = await findOne({ 
@@ -39,6 +41,8 @@ export const signup = async(data , file)=>{
     event.emit("verifyEmail",{userId: addedUser._id , email: addedUser.email , userName: addedUser.userName});
     return addedUser;
 }
+
+
 
 
 
@@ -76,6 +80,22 @@ export const verifyEmail = async({code, email})=>{
     event.emit("Confirmation", { email: user.email, userName: user.userName});
     return {user}
 }
+
+
+export const toogleTwoStepVerification = async(userId)=>{
+    let user = await findById({
+        model: userModel,
+        id: userId
+    })
+    if (!user) { 
+        throw NotFoundException({message: 'user Not Found'});
+    }
+
+    event.emit("toogle",user);
+
+    return;
+}
+
 
 
 export const login = async(data,issuer)=>{

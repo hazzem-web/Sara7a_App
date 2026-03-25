@@ -1,18 +1,22 @@
 import { EventEmitter } from "events";
 import { generateHash } from "../../hashing/hash.js";
-import { redisOtp } from "../../../modules/auth/auth.service.js";
+import { redisKey } from "../../../modules/auth/auth.service.js";
 import { set } from "../../../database/redis.service.js";
 import { sendEmail } from "./sendEmail.js";
 
 export let event = new EventEmitter();
 
-event.on("verifyEmail", async(data)=>{
-    let {userId , email , userName} = data;
-
+export function createOTP(){
     let code = Math.floor(Math.random() * 1000000)
-    code = code.toString().padStart(6,0); 
+    code = code.toString().padStart(6,"0"); 
+    return code;
+} 
+
+event.on("verifyEmail", async(data)=>{
+    let {userId , email , userName} = data;              
+    let code = createOTP();
     await set({
-        key: redisOtp(userId),
+        key: redisKey("OTP",userId),
         value: await generateHash(code),
         ttl: 5 * 60 // 5 minutes
     })
@@ -37,3 +41,20 @@ event.on("Confirmation", async({email , userName})=>{
 })
 
 
+
+event.on("toogle", async(user)=>{
+    let code = createOTP();
+    await set({
+        key: redisKey("2_SV",user._id),
+        value: await generateHash(code),
+        ttl: 5 * 60
+    })
+    await sendEmail({
+        to: user.email,
+        subject: user.twoStepVerification ? "Disable Two Step Verification" : "Enable Two Step Verification",
+            html: `<h1>Hello: ${user.userName}</h1>
+            <p> your otp is: ${code} </p>
+            <p>Note: this otp is valid for 5 minutes</p>
+        `
+    })
+})

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { generateAccessToken, login, logout, signup, signupGoogle, verifyEmail } from "./auth.service.js";
+import { generateAccessToken, login, logout, signup, signupGoogle, toogleTwoStepVerification, verifyEmail } from "./auth.service.js";
 import { SuccessResponse } from '../../common/utils/responses/index.js';
 import { auth, extensions, upload, valiadtion } from "../../common/middleware/index.js";
 import { loginSchema, signupSchema } from "./auth.validation.js";
@@ -15,6 +15,11 @@ router.post('/signup', upload({customPath: 'image/users/profileImages' , allowed
     return SuccessResponse({res , message: "user signed up successfully" , status:201 , data: addedUser})
 })
 
+
+router.post('/toogle-2-step-verification', auth , async(req,res)=>{
+    let data = await toogleTwoStepVerification(req.userId);
+    return SuccessResponse({res , message: 'Email Sent Successfully' , status: 200 , data});
+})
 
 router.post('/verify' , async(req,res)=>{ 
     let data = await verifyEmail(req.body);
