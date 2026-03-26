@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { generateAccessToken, login, logout, signup, signupGoogle, toogleTwoStepVerification, verifyEmail } from "./auth.service.js";
+import { generateAccessToken, login, logout, signup, signupGoogle, toogleTwoStepVerification, verifyEmail, verifyTwoStep } from "./auth.service.js";
 import { SuccessResponse } from '../../common/utils/responses/index.js';
 import { auth, extensions, upload, valiadtion } from "../../common/middleware/index.js";
 import { loginSchema, signupSchema } from "./auth.validation.js";
@@ -21,7 +21,12 @@ router.post('/toogle-2-step-verification', auth , async(req,res)=>{
     return SuccessResponse({res , message: 'Email Sent Successfully' , status: 200 , data});
 })
 
-router.post('/verify' , async(req,res)=>{ 
+router.post('/verify-two-step', auth, async(req,res)=>{
+    let data = await verifyTwoStep(req.userId,req.body);
+    return SuccessResponse({res, message: 'User Two Step Verifaction Verified Successfully', status: 200, data});
+})
+
+router.post('/verify-email' , async(req,res)=>{ 
     let data = await verifyEmail(req.body);
     return SuccessResponse({res, message: "email verified successfully", status: 200, data})
 })

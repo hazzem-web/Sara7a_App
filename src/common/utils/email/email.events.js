@@ -45,7 +45,7 @@ event.on("Confirmation", async({email , userName})=>{
 event.on("toogle", async(user)=>{
     let code = createOTP();
     await set({
-        key: redisKey("2_SV",user._id),
+        key: redisKey("2SV",user._id),
         value: await generateHash(code),
         ttl: 5 * 60
     })
@@ -56,5 +56,17 @@ event.on("toogle", async(user)=>{
             <p> your otp is: ${code} </p>
             <p>Note: this otp is valid for 5 minutes</p>
         `
+    })
+})
+
+
+event.on("verifyTwoStep", async(user)=>{
+    let message = user.twoStepVerification ? " Two Step Verification Enabled Successfully" : " Two Step Verification Disabled Successfully";
+    await sendEmail({
+        to: user.email,
+        subject: "twoStepVerification State",
+        html: `<h1>Hello: ${user.userName}</h1>
+        <p> ${message}</p>
+     `
     })
 })

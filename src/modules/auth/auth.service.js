@@ -1,7 +1,7 @@
 import { JwtAdminSignature, JwtUserSignature } from "../../../config/env.service.js";
 import { compareHash, decodeRefreshToken, generateHash, generateToken, NOTE_SAFE_PROJECTION, ProviderEnums } from "../../common/index.js";
 import { BadRequestException, ConflictException, ErrorResponse, NotFoundException, UnAuthorizedException } from "../../common/utils/responses/index.js";
-import { findById, findOne, findOneAndUpdate, insertOne, userModel } from "../../database/index.js";
+import { findById, findByIdAndUpdate, findOne, findOneAndUpdate, insertOne, userModel } from "../../database/index.js";
 import jwt from 'jsonwebtoken';
 import {OAuth2Client} from 'google-auth-library';
 import {BASE_URL} from '../../../config/env.service.js';
@@ -59,7 +59,7 @@ export const verifyEmail = async({code, email})=>{
         throw BadRequestException({message: 'user is already verified'});
     }
     
-    let redisCode = await get(redisOtp(user));
+    let redisCode = await get(redisKey("OTP",user));
 
     let compared = await compareHash(code, redisCode);
     if (!compared) { 
@@ -82,24 +82,8 @@ export const verifyEmail = async({code, email})=>{
 }
 
 
-export const toogleTwoStepVerification = async(userId)=>{
-    let user = await findById({
-        model: userModel,
-        id: userId
-    })
-    if (!user) { 
-        throw NotFoundException({message: 'user Not Found'});
-    }
-
-    event.emit("toogle",user);
-
-    return;
-}
-
-
-
 export const login = async(data,issuer)=>{
-    let {email , password , twoStepVerification=false} = data;
+    let {email , password} = data;
     let userCacheKey = `user::${email}`;
     let bannedUserKey = `user::banned::${email}`
     let blockingTime = Math.ceil(await ttl(bannedUserKey) / 60)
@@ -115,9 +99,8 @@ export const login = async(data,issuer)=>{
         const isMatched = await compareHash(password,userData.password); 
         if (isMatched) {   
             await redisDelete(userCacheKey);
-            userData.twoStepVerification = twoStepVerification;
-            if(twoStepVerification) { 
-                console.log("hello")
+            if (userData.twoStepVerification) { 
+
             }
             let { accessToken , refreshToken } = await generateToken(userData , issuer);
             return { userData, accessToken , refreshToken};
@@ -146,6 +129,56 @@ export const login = async(data,issuer)=>{
 
 
 
+export const toogleTwoStepVerification = async(userId)=>{
+    let user = await findById({
+        model: userModel,
+        id: userId
+    })
+    if (!user) { 
+        throw NotFoundException({message: 'user Not Found'});
+    }
+
+    event.emit("toogle",user);
+
+    console.log(user);
+
+    return;
+}
+
+
+export const verifyTwoStep = async(userId , data)=>{
+    let { code } = data;
+    let user = await findOne({
+        model: userModel,
+        id: userId
+    });
+
+    if (!user) { 
+        throw NotFoundException({message: 'User Not Found'});
+    }
+
+    let cachedCode = await get(redisKey("2SV",userId));
+    if (!cachedCode) { 
+        throw UnAuthorizedException({message: 'OTP Is Expired'});
+    }
+    let compared = await compareHash(code , cachedCode);
+    if (!compared) { 
+        throw UnAuthorizedException({message: 'Invalid OTP'});
+    }
+
+    let updatedUser = await findByIdAndUpdate({
+        model: userModel,
+        id: userId,
+        update: { twoStepVerification: !user.twoStepVerification},
+        options: { returnDocument: 'after'}
+    })
+
+    event.emit("verifyTwoStep", updatedUser);
+
+    return {updatedUser};
+}
+
+
 export const generateAccessToken = async (token)=>{
     let decodedData = decodeRefreshToken(token);
     let signature = undefined;
@@ -166,7 +199,6 @@ export const generateAccessToken = async (token)=>{
     
     return accessToken;
 }
-
 
 
 export const signupGoogle = async(data)=>{
