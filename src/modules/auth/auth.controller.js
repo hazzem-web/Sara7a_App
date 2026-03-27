@@ -29,7 +29,7 @@ router.post('/verify-email' , async(req,res)=>{
 
 router.post('/login', valiadtion(loginSchema) , async (req,res)=>{
     let userData = await login(req.body , `${req.protocol}://${req.host}`);
-    if (userData._id) { 
+    if (!userData.twoStepVerification) { 
         return SuccessResponse({res , message: "user login successfully" , status:200 , data: userData})
     }
     else { 
