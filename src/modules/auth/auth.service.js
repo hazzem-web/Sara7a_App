@@ -7,12 +7,44 @@ import {OAuth2Client} from 'google-auth-library';
 import {BASE_URL} from '../../../config/env.service.js';
 import { generateRevokeKey, get, increment, redisDelete, set, ttl } from "../../database/redis.service.js";
 import { event } from "../../common/utils/email/email.events.js";
+import { getUser, userNotFound } from "../users/user.service.js";
 
 
 export const redisKey = (type, userOrId) => {
     const id = typeof userOrId === 'object' ? userOrId._id : userOrId;
     return `user::${type}::${id}`;
 };
+
+
+export const verifyOTP = async(identifier , code , cachedKey)=>{
+    let key = redisKey(cachedKey,identifier);
+    let cachedCode = await get(key);
+    if (!cachedCode) { 
+        throw UnAuthorizedException({message: 'OTP Is Expired'});
+    }
+    let compared = await compareHash(code , cachedCode);
+    if (!compared) { 
+        throw UnAuthorizedException({message: 'Invalid OTP'});
+    }
+
+    await redisDelete(key);
+}
+
+
+export const verifyOTPNoAuth = async(email,code )=>{
+    let key = redisKey(cachedKey,userId);
+    let cachedCode = await get(key);
+    if (!cachedCode) { 
+        throw UnAuthorizedException({message: 'OTP Is Expired'});
+    }
+    let compared = await compareHash(code , cachedCode);
+    if (!compared) { 
+        throw UnAuthorizedException({message: 'Invalid OTP'});
+    }
+
+    await redisDelete(key);
+}
+
 
 export const signup = async(data , file)=>{
     let { userName , email , password , age , shareProfileName , phone} = data;
@@ -52,7 +84,7 @@ export const verifyEmail = async({code, email})=>{
         filter: {email}
     })
     if (!user) { 
-        throw NotFoundException({message: 'user not found'});
+        userNotFound();
     }
 
     if(user.isVerified == 1) { 
@@ -99,8 +131,10 @@ export const login = async(data,issuer)=>{
         const isMatched = await compareHash(password,userData.password); 
         if (isMatched) {   
             await redisDelete(userCacheKey);
-            if (userData.twoStepVerification) { 
 
+            if (userData.twoStepVerification) { 
+                event.emit("twoStepLogin", userData);
+                return {message: 'email sent successfully'};
             }
             let { accessToken , refreshToken } = await generateToken(userData , issuer);
             return { userData, accessToken , refreshToken};
@@ -129,18 +163,32 @@ export const login = async(data,issuer)=>{
 
 
 
-export const toogleTwoStepVerification = async(userId)=>{
+export const twoStepLoginVerify = async({email,code} , issuer)=>{
+    let user = await findOne({
+        model: userModel,
+        filter: {email}
+    })
+    if (!user) { 
+        userNotFound();
+    }
+    await verifyOTP(email, code , "OTP::login")
+    event.emit("twoStepLoginVerify",user);
+    let { accessToken , refreshToken } = await generateToken(user , issuer);
+    return { user , accessToken , refreshToken};
+}
+
+
+export const toggleTwoStepVerification = async(userId)=>{
     let user = await findById({
         model: userModel,
         id: userId
-    })
+    });
     if (!user) { 
-        throw NotFoundException({message: 'user Not Found'});
+        userNotFound();
     }
-
-    event.emit("toogle",user);
-
     console.log(user);
+    event.emit("toggle",user);
+
 
     return;
 }
@@ -148,24 +196,15 @@ export const toogleTwoStepVerification = async(userId)=>{
 
 export const verifyTwoStep = async(userId , data)=>{
     let { code } = data;
-    let user = await findOne({
+    let user = await findById({
         model: userModel,
         id: userId
-    });
+    })
 
     if (!user) { 
-        throw NotFoundException({message: 'User Not Found'});
+        userNotFound();
     }
-
-    let cachedCode = await get(redisKey("2SV",userId));
-    if (!cachedCode) { 
-        throw UnAuthorizedException({message: 'OTP Is Expired'});
-    }
-    let compared = await compareHash(code , cachedCode);
-    if (!compared) { 
-        throw UnAuthorizedException({message: 'Invalid OTP'});
-    }
-
+    await verifyOTP(userId , code , "2SV");
     let updatedUser = await findByIdAndUpdate({
         model: userModel,
         id: userId,
@@ -174,7 +213,6 @@ export const verifyTwoStep = async(userId , data)=>{
     })
 
     event.emit("verifyTwoStep", updatedUser);
-
     return {updatedUser};
 }
 

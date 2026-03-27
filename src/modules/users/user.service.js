@@ -8,14 +8,26 @@ const genProfileKey = (userId)=>{
     return `userProfile::${userId}`;
 }
 
+export const userNotFound = ()=>{
+    throw NotFoundException({message: 'user not found'});
+}; 
+
+export const getUser = async(userId)=>{
+    let user = await findById({
+        model: userModel,
+        id: userId
+    })
+
+    if (!user) { 
+        userNotFound();
+    }
+    return {user};
+}
+
 export const increaseUserViewCount = async (userData)=>{
     userData.viewsCount += 1;
     await userData.save();
 }
-
-export const userNotFound = ()=>{
-    throw NotFoundException({message: 'user not found'});
-}; 
 
 
 
@@ -61,13 +73,7 @@ export const getUserProfile = async(userId)=>{
 
 
 export const shareProfileLink = async (userId)=>{
-    let userData = await findById({
-        model: userModel,
-        id: userId
-    });
-    if (!userData) { 
-        userNotFound();
-    }
+    let userData = await getUser(userId);
     let profileURL = `${BASE_URL}/${userData.shareProfileName}`;
     return {profileURL};
 }
@@ -127,7 +133,7 @@ export const deleteUser = async(userId)=>{
         options: {returnDocument: 'after'}
     })
     if (!deletedUser) { 
-        NotFoundException({message: 'user not found'})
+        userNotFound();
     }
     return {deletedUser}
 }

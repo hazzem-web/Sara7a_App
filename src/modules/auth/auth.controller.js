@@ -1,14 +1,10 @@
 import { Router } from "express";
-import { generateAccessToken, login, logout, signup, signupGoogle, toogleTwoStepVerification, verifyEmail, verifyTwoStep } from "./auth.service.js";
+import { generateAccessToken, login, logout, signup, signupGoogle, toggleTwoStepVerification, twoStepLoginVerify, verifyEmail, verifyTwoStep } from "./auth.service.js";
 import { SuccessResponse } from '../../common/utils/responses/index.js';
 import { auth, extensions, upload, valiadtion } from "../../common/middleware/index.js";
 import { loginSchema, signupSchema } from "./auth.validation.js";
 
-
-
 const router = Router();
-
-
 
 router.post('/signup', upload({customPath: 'image/users/profileImages' , allowedExtensions: extensions.image}).single('image') , valiadtion(signupSchema) , async (req,res)=>{
     let addedUser = await signup(req.body , req.file);
@@ -16,8 +12,8 @@ router.post('/signup', upload({customPath: 'image/users/profileImages' , allowed
 })
 
 
-router.post('/toogle-2-step-verification', auth , async(req,res)=>{
-    let data = await toogleTwoStepVerification(req.userId);
+router.post('/toggle-2-step-verification', auth , async(req,res)=>{
+    let data = await toggleTwoStepVerification(req.userId);
     return SuccessResponse({res , message: 'Email Sent Successfully' , status: 200 , data});
 })
 
@@ -33,7 +29,18 @@ router.post('/verify-email' , async(req,res)=>{
 
 router.post('/login', valiadtion(loginSchema) , async (req,res)=>{
     let userData = await login(req.body , `${req.protocol}://${req.host}`);
-    return SuccessResponse({res , message: "user login successfully" , status:200 , data: userData})
+    if (userData._id) { 
+        return SuccessResponse({res , message: "user login successfully" , status:200 , data: userData})
+    }
+    else { 
+        return SuccessResponse({res , message: "please enter the OTP Sent to your email to login using 2FA", status: 200, data: userData})
+    }
+    
+})
+
+router.post('/login/verify-two-step-login' , async(req,res)=>{
+    let data = await twoStepLoginVerify(req.body , `${req.protocol}://${req.host}`);
+    return SuccessResponse({res, message: 'user two step verification logged-in successfully', status: 200, data});
 })
 
 router.get('/generate-access-token', async(req,res)=>{

@@ -3,6 +3,7 @@ import { NOTE_SAFE_PROJECTION, USER_SAFE_PROJECTION } from "../../common/utils/p
 import { BadRequestException, NotFoundException, UnAuthorizedException } from "../../common/utils/responses/index.js";
 import { deleteOne, findAll, findById, findByIdAndDelete, findOne, insertOne, userModel } from "../../database/index.js";
 import { messageModel } from "../../database/models/message.model.js";
+import { userNotFound } from "../users/user.service.js";
 
 export const sendMessage = async(params , data , file)=>{
     let { recieverID } = params;
@@ -14,7 +15,7 @@ export const sendMessage = async(params , data , file)=>{
     })
 
     if (!existReciever) { 
-        throw NotFoundException("user not found");
+        userNotFound();
     }
 
     let image = '';
@@ -43,7 +44,7 @@ export const getAllMessages = async(userId)=>{
         id: userId
     })
     if (!existUser) { 
-        throw NotFoundException("user not found");
+        userNotFound();
     }
 
     let messages = await findAll({
