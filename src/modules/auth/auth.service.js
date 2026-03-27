@@ -31,20 +31,6 @@ export const verifyOTP = async(identifier , code , cachedKey)=>{
 }
 
 
-export const verifyOTPNoAuth = async(email,code )=>{
-    let key = redisKey(cachedKey,userId);
-    let cachedCode = await get(key);
-    if (!cachedCode) { 
-        throw UnAuthorizedException({message: 'OTP Is Expired'});
-    }
-    let compared = await compareHash(code , cachedCode);
-    if (!compared) { 
-        throw UnAuthorizedException({message: 'Invalid OTP'});
-    }
-
-    await redisDelete(key);
-}
-
 
 export const signup = async(data , file)=>{
     let { userName , email , password , age , shareProfileName , phone} = data;
