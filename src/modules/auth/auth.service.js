@@ -126,12 +126,14 @@ export const login = async(data,issuer)=>{
         model: userModel , 
         filter: {email , provider: ProviderEnums.System},
         select: `${NOTE_SAFE_PROJECTION}`
-    });
+    }); 
     if (userData) { 
+        if (!userData.isVerified) { 
+            UnAuthorizedException({message: 'Your Account Is Not Vrified'});
+        }
         const isMatched = await compareHash(password,userData.password); 
         if (isMatched) {   
             await redisDelete(userCacheKey);
-
             if (userData.twoStepVerification) { 
                 event.emit("twoStepLogin", userData);
                 return {message: 'email sent successfully'};
