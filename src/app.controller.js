@@ -6,7 +6,7 @@ import cors from 'cors';
 import authRouter from './modules/auth/auth.controller.js';
 import userRouter from './modules/users/user.controller.js';
 import messageRouter from './modules/messages/message.controller.js';
-import { get, set, ttl } from './database/redis.service.js';
+import './cron.js';
 
 export const bootstrap = async ()=>{
     const app = express();

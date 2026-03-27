@@ -24,10 +24,19 @@ export const getUser = async(userId)=>{
     return {user};
 }
 
-export const increaseUserViewCount = async (userData)=>{
-    userData.viewsCount += 1;
-    await userData.save();
-}
+let selectedUserData = "firstName lastName email shareProfileName image viewsCount";
+
+export const increaseUserViewCount = async (userData) => {
+    let updatedData = await findByIdAndUpdate({
+        model: userModel,
+        id: userData._id,
+        update: {$inc: { viewsCount: 1 }},
+        options: {returnDocument: 'after'},
+        select: selectedUserData
+    })
+    return updatedData;
+};
+
 
 
 
@@ -52,12 +61,13 @@ export const getUserProfile = async(userId)=>{
     let cachedUser = genProfileKey(userId);
     let userData = await get(cachedUser);
     if (userData) { 
-        return userData
+        let updatedData = await increaseUserViewCount(userData);
+        return {userData: updatedData};
     }    
     userData = await findById({
         model: userModel,
         id: userId,
-        select: 'firstName lastName email shareProfileName image viewsCount'
+        select: selectedUserData
     });
     if (!userData) { 
         userNotFound();
@@ -85,7 +95,7 @@ export const getUserDataByLink = async(data)=>{
     let userData = await findOne({
         model: userModel,
         filter: {shareProfileName: profileName},
-        select: "firstName lastName email viewsCount"
+        select: selectedUserData
     });
     if (!userData) { 
         userNotFound();
