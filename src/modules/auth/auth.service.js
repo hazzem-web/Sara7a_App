@@ -258,7 +258,6 @@ export const signupGoogle = async(data)=>{
     return addedUser;
 }
 
-
  
 export const logout = async(req)=>{
     let {userId , decoded} = req;  
@@ -267,6 +266,53 @@ export const logout = async(req)=>{
     await redisDelete(revokeToken);
 }
 
+
+
+export const forgetPassword = async({email})=>{
+    let user = await findOne({
+        model: userModel,
+        filter: {email}
+    });
+    if (!user) { 
+        userNotFound();
+    }
+    event.emit("forgetPassword", user);
+    return {email};
+}
+
+
+export const resetPassword = async(data)=>{
+    let {email , code , password , confirmPassword} = data;
+
+    let user = await findOne({
+        model: userModel,
+        filter: {email}
+    });
+    if (!user) { 
+        userNotFound();
+    }
+
+    if (password !== confirmPassword) { 
+        throw ConflictException({message: "Confirm Password Must Be Match With Password"});
+    } 
+    await verifyOTP(email , code , "OTP::reset");
+
+    let matched = await compareHash(password , user.password);
+    if (matched) { 
+        throw BadRequestException({message: "New Password Cant Be The Same With Old Password"});
+    }
+    let hashedPassword = await generateHash(password);
+
+    let updatedUser = await findByIdAndUpdate({
+        model: userModel,
+        id: user._id,
+        update: {password: hashedPassword},
+        options: {returnDocument: 'after'}
+    });
+
+    event.emit("resetPassword", user);
+    return {email};
+}
 
 
 

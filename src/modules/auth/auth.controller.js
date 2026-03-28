@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { generateAccessToken, login, logout, signup, signupGoogle, toggleTwoStepVerification, twoStepLoginVerify, verifyEmail, verifyTwoStep } from "./auth.service.js";
+import { forgetPassword, generateAccessToken, login, logout, resetPassword, signup, signupGoogle, toggleTwoStepVerification, twoStepLoginVerify, verifyEmail, verifyTwoStep } from "./auth.service.js";
 import { SuccessResponse } from '../../common/utils/responses/index.js';
 import { auth, extensions, upload, valiadtion } from "../../common/middleware/index.js";
 import { loginSchema, signupSchema } from "./auth.validation.js";
@@ -58,11 +58,23 @@ router.post('/signup/gmail', async(req,res)=>{
 })
 
 
+
 router.post('/logout' , auth , async(req,res)=>{
     let user = await logout(req);
     return SuccessResponse({res, message: 'User Logged Out Successsfully', status: 200});
 })
 
+
+router.post('/forget-password', async(req,res)=>{
+    let data = await forgetPassword(req.body);
+    return SuccessResponse({res, message: 'Email Confirmation With OTP Sent to Reset Your Password', status: 200 , data});
+})
+
+
+router.put('/reset-password', async(req,res)=>{
+    let data = await resetPassword(req.body);
+    return SuccessResponse({res, message: 'Password Reset Successfully , Login With Your New Password', status: 200 , data});
+})
 
 export default router;
 

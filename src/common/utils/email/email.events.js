@@ -100,3 +100,31 @@ event.on("twoStepLoginVerify", async(user)=>{
         `
     })
 })
+
+event.on("forgetPassword", async(user)=>{
+    let OTP = createOTP();
+    await set({
+        key: redisKey("OTP::reset",user.email),
+        value: await generateHash(OTP),
+        ttl: 5 * 60
+    })
+
+    await sendEmail({
+        to: user.email,
+        subject: "Reset Password With OTP",
+        html: `<h1>Hello ${user.userName}</h1>
+            <p> please use this otp to reset your password: ${OTP}</p>
+        <p>Note: this otp is valid for 5 minutes</p>
+      `
+    })
+})
+
+event.on("resetPassword", async(user)=>{
+    await sendEmail({
+        to: user.email,
+        subject: "Password Reset Successfully With OTP",
+        html: `<h1>Hello: ${user.userName}</h1>
+            <p>Password Reset Successfully , Login With Your New Password</p>
+        `
+    })
+})
