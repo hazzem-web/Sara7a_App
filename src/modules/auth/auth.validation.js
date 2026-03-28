@@ -2,6 +2,7 @@ import joi from 'joi';
 const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*-+]).{8,}$/;
 export const phonePattern = /^\+?[1-9]\d{1,14}$/
 
+
 export const signupSchema = joi.object({
     userName: joi.string().min(3).max(50).required(),
     email: joi.string().email().required(),
@@ -28,7 +29,6 @@ export const signupSchema = joi.object({
 export const loginSchema = joi.object({
     email: joi.string().min(3).max(50).required(),
     password: joi.string().min(6).max(50).required(),
-    twoStepVerification: joi.boolean().optional()
 })
 
 
@@ -45,4 +45,54 @@ export const fileSchema = joi.object({
         finalPath: joi.string().required()
     },
     text: joi.string().optional()
+})
+
+
+export const verifyEmailSchema = joi.object({
+    code: joi.string().length(6).required().messages({
+        "string.length": "OTP length must be 6 numbers"
+    }),
+    email: joi.string().email().required()
+});
+
+
+export const twoStepLoginVerifySchema = joi.object({
+    email: joi.string().email().required(),
+    code: joi.string().length(6).required().messages({
+        "string.length": "OTP length must be 6 numbers"
+    })
+})
+
+
+export const verifyTwoStepSchema = joi.object({
+    code: joi.string().length(6).required().messages({
+        "string.length": "OTP length must be 6 numbers"
+    })
+})
+
+
+
+export const forgetPasswordSchema = joi.object({
+    email: joi.string().email().required()
+})
+
+
+
+export const resetPasswordSchema = joi.object({
+    email: joi.string().email().required(),
+    code: joi.string().length(6).required().messages({
+            "string.length": "OTP length must be 6 numbers"
+        }), 
+    password: joi
+            .string()
+            .min(6)
+            .max(50)
+            .pattern(passwordRegex)
+            .required(),
+    confirmPassword: joi
+            .string()
+            .min(6)
+            .max(50)
+            .pattern(passwordRegex)
+            .required() 
 })

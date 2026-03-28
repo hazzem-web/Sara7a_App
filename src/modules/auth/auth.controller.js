@@ -2,7 +2,7 @@ import { Router } from "express";
 import { forgetPassword, generateAccessToken, login, logout, resetPassword, signup, signupGoogle, toggleTwoStepVerification, twoStepLoginVerify, verifyEmail, verifyTwoStep } from "./auth.service.js";
 import { SuccessResponse } from '../../common/utils/responses/index.js';
 import { auth, extensions, upload, valiadtion } from "../../common/middleware/index.js";
-import { loginSchema, signupSchema } from "./auth.validation.js";
+import { forgetPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, twoStepLoginVerifySchema, verifyEmailSchema, verifyTwoStepSchema } from "./auth.validation.js";
 
 const router = Router();
 
@@ -17,12 +17,12 @@ router.post('/toggle-2-step-verification', auth , async(req,res)=>{
     return SuccessResponse({res , message: 'Email Sent Successfully' , status: 200 , data});
 })
 
-router.post('/verify-two-step', auth, async(req,res)=>{
+router.post('/verify-two-step', auth, valiadtion(verifyTwoStepSchema), async(req,res)=>{
     let data = await verifyTwoStep(req.userId,req.body);
     return SuccessResponse({res, message: 'User Two Step Verifaction Verified Successfully', status: 200, data});
 })
 
-router.post('/verify-email' , async(req,res)=>{ 
+router.post('/verify-email', valiadtion(verifyEmailSchema) , async(req,res)=>{ 
     let data = await verifyEmail(req.body);
     return SuccessResponse({res, message: "email verified successfully", status: 200, data})
 })
@@ -38,7 +38,7 @@ router.post('/login', valiadtion(loginSchema) , async (req,res)=>{
     
 })
 
-router.post('/login/verify-two-step-login' , async(req,res)=>{
+router.post('/login/verify-two-step-login', valiadtion(twoStepLoginVerifySchema) , async(req,res)=>{
     let data = await twoStepLoginVerify(req.body , `${req.protocol}://${req.host}`);
     return SuccessResponse({res, message: 'user two step verification logged-in successfully', status: 200, data});
 })
@@ -65,13 +65,13 @@ router.post('/logout' , auth , async(req,res)=>{
 })
 
 
-router.post('/forget-password', async(req,res)=>{
+router.post('/forget-password', valiadtion(forgetPasswordSchema) , async(req,res)=>{
     let data = await forgetPassword(req.body);
     return SuccessResponse({res, message: 'Email Confirmation With OTP Sent to Reset Your Password', status: 200 , data});
 })
 
 
-router.put('/reset-password', async(req,res)=>{
+router.put('/reset-password', valiadtion(resetPasswordSchema) , async(req,res)=>{
     let data = await resetPassword(req.body);
     return SuccessResponse({res, message: 'Password Reset Successfully , Login With Your New Password', status: 200 , data});
 })

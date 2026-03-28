@@ -151,7 +151,8 @@ export const login = async(data,issuer)=>{
 
 
 
-export const twoStepLoginVerify = async({email,code} , issuer)=>{
+export const twoStepLoginVerify = async(credentials , issuer)=>{
+    let {email,code} = credentials;
     let user = await findOne({
         model: userModel,
         filter: {email}
@@ -201,7 +202,7 @@ export const verifyTwoStep = async(userId , data)=>{
     })
 
     event.emit("verifyTwoStep", updatedUser);
-    return {updatedUser};
+    return {email};
 }
 
 
