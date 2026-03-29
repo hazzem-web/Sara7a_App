@@ -9,9 +9,20 @@ import userRouter from './modules/users/user.controller.js';
 import messageRouter from './modules/messages/message.controller.js';
 import './cron.js';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 const allowedOrigins = [BASE_URL];
+for(let i =0; i < allowedOrigins.length; i++){
+    console.log("allowedOrigin: ", allowedOrigins[i]);
+}
 export const bootstrap = async ()=>{
     const app = express();
+
+    app.use(rateLimit({
+        windowMs: 15 * 1000 * 60,
+        limit: 100,
+        legacyHeaders: false
+    }))
+
     const uploadsPath = path.join(process.cwd(), 'uploads');
     console.log("serving static files from: ", uploadsPath);
     app.use(express.static(uploadsPath));
@@ -20,7 +31,13 @@ export const bootstrap = async ()=>{
     app.use(express.urlencoded({extended: false}))
     app.use(helmet());
     app.use(cors({
-        origin: [...allowedOrigins],
+        origin: function(origin, callback){
+            console.log("origin: ", origin);
+            if (!origin || allowedOrigins.includes(origin)) { 
+                return callback(null , true)
+            }
+            return callback(new Error("this origin is not allowed to send request (unauthorized)"))
+        },
         credentials: true
     }));
 
