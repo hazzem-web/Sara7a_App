@@ -9,18 +9,26 @@ import userRouter from './modules/users/user.controller.js';
 import messageRouter from './modules/messages/message.controller.js';
 import './cron.js';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import axios from 'axios';
 const allowedOrigins = [BASE_URL];
-for(let i =0; i < allowedOrigins.length; i++){
-    console.log("allowedOrigin: ", allowedOrigins[i]);
-}
 export const bootstrap = async ()=>{
     const app = express();
+    app.set("trust proxy", true);
+
+    let getCountryCode = async (ip)=>{
+        let data = await axios.get(`http://ip-api.com/json/${ip}`);
+        return data.data.countryCode;
+    }
 
     app.use(rateLimit({
         windowMs: 15 * 1000 * 60,
-        limit: 100,
-        legacyHeaders: false
+        limit: async(req,res)=>{
+            let countryCode = await getCountryCode(req.ip);
+            console.log(countryCode, " limit")
+            console.log(ipKeyGenerator(req.ip));
+            return countryCode === "EG" ? 3 : 0;
+        }
     }))
 
     const uploadsPath = path.join(process.cwd(), 'uploads');
@@ -32,13 +40,12 @@ export const bootstrap = async ()=>{
     app.use(helmet());
     app.use(cors({
         origin: function(origin, callback){
-            console.log("origin: ", origin);
             if (!origin || allowedOrigins.includes(origin)) { 
                 return callback(null , true)
             }
             return callback(new Error("this origin is not allowed to send request (unauthorized)"))
         },
-        credentials: true
+        credentials: true   
     }));
 
     app.use('/uploads',express.static('uploads'))
