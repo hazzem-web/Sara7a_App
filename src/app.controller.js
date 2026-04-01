@@ -10,21 +10,21 @@ import messageRouter from './modules/messages/message.controller.js';
 import './cron.js';
 import helmet from 'helmet';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import axios from 'axios';
+import geoip from 'geoip-lite';
 const allowedOrigins = [BASE_URL];
 export const bootstrap = async ()=>{
     const app = express();
-    app.set("trust proxy", true);
+    app.set("trust proxy", 1);
 
-    let getCountryCode = async (ip)=>{
-        let data = await axios.get(`http://ip-api.com/json/${ip}`);
-        return data.data.countryCode;
+    let getCountryCode = (ip)=>{
+        let data = geoip.lookup(ip) 
+        return data?.country || null;;
     }
 
     app.use(rateLimit({
         windowMs: 15 * 1000 * 60,
-        limit: async(req,res)=>{
-            let countryCode = await getCountryCode(req.ip);
+        limit: (req,res)=>{
+            let countryCode = getCountryCode(req.ip);
             console.log(countryCode, " limit")
             console.log(ipKeyGenerator(req.ip));
             return countryCode === "EG" ? 3 : 0;
