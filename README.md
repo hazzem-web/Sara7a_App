@@ -25,10 +25,12 @@ Built with focus on **performance**, **security**, and **clean architecture**.
 | **JWT Authentication + JTI** | Stateless auth with effective token revocation |
 | **Session & Token Blacklisting** | Stored in Redis for instant invalidation |
 | **Brute-Force Protection** | Redis-based attempt limiting + temporary ban |
+| **IP-Based Geo Restriction** | Country-level access control using geoip-lite |
 | **Profile Customization** | Update name, avatar, bio, and sharing preferences |
 | **File Uploads** | Secure image/file attachments via Multer |
-| **Rate Limiting & RBAC** | Login protection, input sanitization, role-based access control |
+| **Rate Limiting & RBAC** | Global + per-route protection with role-based access control |
 | **Input Validation** | Joi + custom regex patterns |
+| **Scheduled Cleanup** | Auto-deletion of unverified accounts via node-cron |
 
 ---
 
@@ -56,6 +58,9 @@ Built with focus on **performance**, **security**, and **clean architecture**.
 | Email | Nodemailer (SMTP + app passwords) |
 | File Upload | Multer |
 | Validation | Joi + custom regex |
+| Geo Restriction | geoip-lite |
+| Scheduler | node-cron |
+| Security Headers | helmet |
 | Environment | dotenv |
 | Development | nodemon |
 
@@ -93,33 +98,62 @@ config/
 src/
   common/
     enums/
+      enum.service.js
     hashing/
+      hash.js
     middleware/
+      auth.js
+      index.js
+      multer.js
+      validation.js
     security/
+      security.js
     utils/
       email/
-    responses/
+        email.events.js
+        sendEmail.js
+      responses/
+        error.response.js
+        index.js
+        success.response.js
+      ObjecIDValidation.js
+      projections.js
+    index.js
 
   database/
     models/
+      index.js
+      message.model.js
+      user.model.js
     connection.js
     database.service.js
+    index.js
     redis.js
     redis.service.js
 
   modules/
-    auth/           # Login, signup, token logic, revocation
-    messages/       # Anonymous messages + attachments
-    users/          # Profile CRUD, settings
+    auth/
+      auth.controller.js    # Login, signup, token logic, revocation
+      auth.service.js
+      auth.validation.js
+    messages/
+      message.controller.js # Anonymous messages + attachments
+      message.service.js
+      message.validation.js
+    users/
+      user.controller.js    # Profile CRUD, settings
+      user.service.js
+      user.validation.js
 
   app.controller.js
+  cron.js
   main.js
 
 uploads/
   image/
     users/
       images/
-  profileImages/
+      profileImages/
 ```
 
 ---
@@ -163,8 +197,11 @@ CLIENT_URL=http://localhost:5173
 
 ```bash
 # Development mode (with auto-restart)
-
 npm run start:dev
+
+# Production mode
+npm start
+```
 
 ---
 
@@ -174,6 +211,8 @@ npm run start:dev
 - **Clean modular structure** separating concerns across `common`, `database`, and `modules`
 - **Redis used for both caching and security** (OTP TTL, token blacklisting, brute-force protection)
 - **Real-world authentication flows** (2FA + rate limiting + token revocation)
+- **IP-based geo restriction** using geoip-lite to control access by country
+- **Scheduled cron job** for automatic cleanup of unverified accounts
 - **~70% performance gain** in email delivery after architectural migration
 
 ---
