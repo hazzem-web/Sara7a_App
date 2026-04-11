@@ -91,69 +91,68 @@ Built with focus on **performance**, **security**, and **clean architecture**.
 ## 📂 Project Structure
 
 ```
-config/
-  env.service.js
-  index.js
-
-src/
-  common/
-    enums/
-      enum.service.js
-    hashing/
-      hash.js
-    middleware/
-      auth.js
-      index.js
-      multer.js
-      validation.js
-    security/
-      security.js
-    utils/
-      email/
-        email.events.js
-        sendEmail.js
-      responses/
-        error.response.js
-        index.js
-        success.response.js
-      ObjecIDValidation.js
-      projections.js
-    index.js
-
-  database/
-    models/
-      index.js
-      message.model.js
-      user.model.js
-    connection.js
-    database.service.js
-    index.js
-    redis.js
-    redis.service.js
-
-  modules/
-    auth/
-      auth.controller.js    # Login, signup, token logic, revocation
-      auth.service.js
-      auth.validation.js
-    messages/
-      message.controller.js # Anonymous messages + attachments
-      message.service.js
-      message.validation.js
-    users/
-      user.controller.js    # Profile CRUD, settings
-      user.service.js
-      user.validation.js
-
-  app.controller.js
-  cron.js
-  main.js
-
-uploads/
-  image/
-    users/
-      images/
-      profileImages/
+📦 Sara7a_App
+├── 📁 config
+│   ├── env.service.js
+│   └── index.js
+│
+├── 📁 src
+│   ├── 📁 common
+│   │   ├── 📁 enums
+│   │   │   └── enum.service.js
+│   │   ├── 📁 hashing
+│   │   │   └── hash.js
+│   │   ├── 📁 middleware
+│   │   │   ├── auth.js
+│   │   │   ├── index.js
+│   │   │   ├── multer.js
+│   │   │   └── validation.js
+│   │   ├── 📁 security
+│   │   │   └── security.js
+│   │   ├── 📁 utils
+│   │   │   ├── 📁 email
+│   │   │   │   ├── email.events.js
+│   │   │   │   └── sendEmail.js
+│   │   │   └── 📁 responses
+│   │   │       ├── error.response.js
+│   │   │       ├── index.js
+│   │   │       └── success.response.js
+│   │   └── index.js
+│   │
+│   ├── 📁 database
+│   │   ├── 📁 models
+│   │   │   ├── index.js
+│   │   │   ├── message.model.js
+│   │   │   └── user.model.js
+│   │   ├── connection.js
+│   │   ├── database.service.js
+│   │   ├── index.js
+│   │   ├── redis.js
+│   │   └── redis.service.js
+│   │
+│   ├── 📁 modules
+│   │   ├── 📁 auth              # Login, signup, token logic, revocation
+│   │   │   ├── auth.controller.js
+│   │   │   ├── auth.service.js
+│   │   │   └── auth.validation.js
+│   │   ├── 📁 messages          # Anonymous messages + attachments
+│   │   │   ├── message.controller.js
+│   │   │   ├── message.service.js
+│   │   │   └── message.validation.js
+│   │   └── 📁 users             # Profile CRUD, settings
+│   │       ├── user.controller.js
+│   │       ├── user.service.js
+│   │       └── user.validation.js
+│   │
+│   ├── app.controller.js
+│   ├── cron.js
+│   └── main.js
+│
+└── 📁 uploads
+    └── 📁 image
+        └── 📁 users
+            ├── images/
+            └── profileImages/
 ```
 
 ---
@@ -175,23 +174,7 @@ npm install
 
 ### 3. Create `.env` file
 
-```env
-# ── Required ──────────────────────────────────
-PORT=3000
-DB_URI=mongodb://localhost:27017/sara7a
-REDIS_HOST=localhost
-REDIS_PORT=6379
 
-JWT_SECRET=your-very-long-random-secret-here
-
-# Email configuration (Gmail example)
-EMAIL_USER=yourname@gmail.com
-EMAIL_PASS=your-app-specific-password
-
-# ── Optional ───────────────────────────────────
-NODE_ENV=development
-CLIENT_URL=http://localhost:5173
-```
 
 ### 4. Start the server
 
